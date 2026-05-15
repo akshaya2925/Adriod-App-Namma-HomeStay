@@ -1,0 +1,12 @@
+*.iml
+.gradle
+/local.properties
+.idea
+.DS_Store
+/build
+/captures
+app/build
+google-services.json
+*.hprof
+gradle-extracted/
+gradle-8.2.zip

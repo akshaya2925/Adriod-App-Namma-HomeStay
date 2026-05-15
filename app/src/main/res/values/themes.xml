@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash Screen API Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#B5541A</item>
+        <item name="postSplashScreenTheme">@style/Theme.NammaHomeStay</item>
+    </style>
+
+    <style name="Theme.NammaHomeStay" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

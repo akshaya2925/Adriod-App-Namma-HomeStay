@@ -1,0 +1,20 @@
+﻿<resources>
+    <string name="app_name">NammaHomeStay</string>
+    <string name="good_morning">Good morning, %1$s</string>
+    <string name="inquiries_this_week">Inquiries\nThis Week</string>
+    <string name="unread_messages">Unread\nMessages</string>
+    <string name="profile_completeness">Profile\nCompleteness</string>
+    <string name="today_menu">Today\'s Menu</string>
+    <string name="availability">Accepting Guests?</string>
+    <string name="recent_inquiries">Recent Inquiries</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="update_menu">Update Menu</string>
+    <string name="add_spot">Add Spot</string>
+    <string name="logout">Logout</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Finish</string>
+    <string name="call">ðŸ“ž Call</string>
+    <string name="no_menu_yet">No menu updated today.</string>
+</resources>
