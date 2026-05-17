@@ -25,8 +25,23 @@ class HostRepository {
                     return@addSnapshotListener
                 }
                 if (snapshot != null && snapshot.exists()) {
-                    val profile = snapshot.toObject(HostProfile::class.java)
-                    if (profile != null) {
+                    val data = snapshot.data
+                    if (data != null) {
+                        val profile = HostProfile(
+                            homestayName = data["homestayName"] as? String ?: "",
+                            village = data["village"] as? String ?: "",
+                            numRooms = (data["numRooms"] as? Long)?.toInt() ?: 0,
+                            maxGuests = (data["maxGuests"] as? Long)?.toInt() ?: 0,
+                            roomType = data["roomType"] as? String ?: "",
+                            description = data["description"] as? String ?: "",
+                            photoUrls = (data["photoUrls"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                            verificationChecklist = (data["verificationChecklist"] as? Map<*, *>)?.entries?.associate {
+                                it.key.toString() to (it.value as? Boolean ?: false)
+                            } ?: emptyMap(),
+                            whatsapp = data["whatsapp"] as? String ?: "",
+                            languages = parseLanguages(data["languages"]),
+                            isProfileComplete = data["isProfileComplete"] as? Boolean ?: false,
+                        )
                         trySend(AppResult.Success(profile))
                     }
                 } else {
@@ -53,5 +68,13 @@ class HostRepository {
                 "isProfileComplete" to true
             )
         ).await()
+    }
+
+    private fun parseLanguages(value: Any?): List<String> {
+        return when (value) {
+            is List<*> -> value.filterIsInstance<String>()
+            is String -> value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            else -> emptyList()
+        }
     }
 }

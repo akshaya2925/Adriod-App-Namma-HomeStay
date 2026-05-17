@@ -29,7 +29,18 @@ class LocalGuideViewModel(application: Application) : AndroidViewModel(applicati
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
-    fun addSpot(name: String, category: String, description: String, distance: String, bestTime: String, photoUri: Uri?, onSuccess: () -> Unit) {
+    fun addSpot(
+        name: String,
+        category: String,
+        description: String,
+        distance: String,
+        bestTime: String,
+        locationUrl: String,
+        entryFee: String,
+        timings: String,
+        photoUri: Uri?,
+        onSuccess: () -> Unit
+    ) {
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -52,6 +63,9 @@ class LocalGuideViewModel(application: Application) : AndroidViewModel(applicati
                     photoUrl = photoUrl,
                     distance = distance,
                     bestTime = bestTime,
+                    locationUrl = locationUrl,
+                    entryFee = entryFee,
+                    timings = timings,
                     createdAt = Timestamp.now()
                 )
 

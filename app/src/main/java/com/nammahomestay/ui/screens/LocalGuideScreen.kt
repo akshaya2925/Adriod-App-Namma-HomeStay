@@ -1,24 +1,29 @@
 package com.nammahomestay.ui.screens
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.nammahomestay.data.LocalSpot
 import com.nammahomestay.ui.guide.LocalGuideViewModel
+import com.nammahomestay.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -39,6 +45,7 @@ fun LocalGuideScreen() {
     val loading by viewModel.loading.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     var showBottomSheet by remember { mutableStateOf(false) }
     var spotToDelete by remember { mutableStateOf<LocalSpot?>(null) }
 
@@ -72,83 +79,105 @@ fun LocalGuideScreen() {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("Local Secret Spots 🗺️", fontWeight = FontWeight.Bold, color = BrownMedium, fontSize = 20.sp)
+                        Text("Nearby attractions to share with your guests", fontSize = 12.sp, color = TextLight)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Cream)
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showBottomSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = Terra,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Spot")
             }
         }
     ) { innerPadding ->
-        if (spots.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+        Column(modifier = Modifier.fillMaxSize().background(Cream).padding(innerPadding)) {
+            if (spots.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                     Text(
                         text = "Share your local secrets!\nAdd waterfalls, viewpoints, or local markets to help travelers explore.",
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TextMedium
                     )
                 }
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(spots) { spot ->
-                    Card(
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = { /* View Details (optional) */ },
-                                onLongClick = { spotToDelete = spot }
-                            )
-                    ) {
-                        Column {
-                            if (!spot.photoUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = spot.photoUrl,
-                                    contentDescription = "Spot Photo",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(120.dp)
-                                )
-                            }
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(text = spot.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text(text = spot.category, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                if (spot.distance.isNotEmpty()) {
-                                    Text(text = "Distance: ${spot.distance}", fontSize = 12.sp)
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1), // Single column like the HTML layout in mobile-ish view
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(spots) { spot ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = { /* Details */ },
+                                    onLongClick = { spotToDelete = spot }
+                                ),
+                            colors = CardDefaults.cardColors(containerColor = Sand),
+                            border = CardDefaults.outlinedCardBorder()
+                        ) {
+                            Row(modifier = Modifier.padding(16.dp)) {
+                                Text(getCategoryIcon(spot.category), fontSize = 24.sp)
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(text = spot.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                                        if (spot.locationUrl.isNotBlank()) {
+                                            Text(
+                                                text = "View on Map ↗",
+                                                fontSize = 11.sp,
+                                                color = Terra,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.clickable {
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(spot.locationUrl))
+                                                        context.startActivity(intent)
+                                                    } catch (e: Exception) {
+                                                        // Handle error
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "📍 ${spot.distance} · ${spot.bestTime}",
+                                        fontSize = 11.sp,
+                                        color = TextLight,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                    if (spot.entryFee.isNotBlank() || spot.timings.isNotBlank()) {
+                                        Text(
+                                            text = "${if(spot.entryFee.isNotBlank()) "🎟️ " + spot.entryFee else ""} ${if(spot.timings.isNotBlank()) "⏰ " + spot.timings else ""}",
+                                            fontSize = 11.sp,
+                                            color = BrownMedium,
+                                            modifier = Modifier.padding(top = 2.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = spot.description,
+                                        fontSize = 13.sp,
+                                        color = TextMedium,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        lineHeight = 18.sp
+                                    )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = spot.description,
-                                    fontSize = 14.sp,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
                         }
                     }
@@ -159,12 +188,12 @@ fun LocalGuideScreen() {
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                containerColor = Color.White
             ) {
                 AddSpotForm(
                     loading = loading,
-                    onSave = { name, category, desc, dist, bestTime, uri ->
-                        viewModel.addSpot(name, category, desc, dist, bestTime, uri) {
+                    onSave = { name, category, desc, dist, bestTime, locUrl, fee, time, uri ->
+                        viewModel.addSpot(name, category, desc, dist, bestTime, locUrl, fee, time, uri) {
                             showBottomSheet = false
                         }
                     }
@@ -174,11 +203,24 @@ fun LocalGuideScreen() {
     }
 }
 
+fun getCategoryIcon(category: String): String {
+    return when (category) {
+        "Waterfall" -> "💧"
+        "Viewpoint" -> "⛰️"
+        "Beach" -> "🌊"
+        "Market" -> "🛍️"
+        "Temple" -> "🛕"
+        "Farm" -> "🌾"
+        "Experience" -> "🌾"
+        else -> "📍"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSpotForm(
     loading: Boolean,
-    onSave: (String, String, String, String, String, Uri?) -> Unit
+    onSave: (String, String, String, String, String, String, String, String, Uri?) -> Unit
 ) {
     var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
     var name by remember { mutableStateOf("") }
@@ -186,11 +228,12 @@ fun AddSpotForm(
     var description by remember { mutableStateOf("") }
     var distance by remember { mutableStateOf("") }
     var bestTime by remember { mutableStateOf("") }
+    var locationUrl by remember { mutableStateOf("") }
+    var entryFee by remember { mutableStateOf("") }
+    var timings by remember { mutableStateOf("") }
 
     var expandedCategory by remember { mutableStateOf(false) }
-    val categories = listOf("Waterfall", "Viewpoint", "Beach", "Market", "Temple", "Farm", "Other")
-
-    var nameError by remember { mutableStateOf(false) }
+    val categories = listOf("Waterfall", "Viewpoint", "Beach", "Market", "Temple", "Farm", "Experience", "Other")
 
     val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { pendingPhotoUri = it }
@@ -200,33 +243,32 @@ fun AddSpotForm(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Add Local Spot", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text("Add New Secret Spot", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = BrownMedium)
 
-        OutlinedButton(
-            onClick = { photoLauncher.launch("image/*") },
-            modifier = Modifier.fillMaxWidth()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .background(Sand, RoundedCornerShape(12.dp))
+                .clickable { photoLauncher.launch("image/*") },
+            contentAlignment = Alignment.Center
         ) {
-            Text(if (pendingPhotoUri != null) "Photo Selected âœ“" else "Pick Photo (Optional)")
+            if (pendingPhotoUri != null) {
+                AsyncImage(model = pendingPhotoUri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            } else {
+                Text("📷 Tap to add photo (Optional)", fontSize = 14.sp, color = TextMedium)
+            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it; nameError = false },
-            label = { Text("Spot Name *") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = nameError,
-            supportingText = if (nameError) { { Text("Required") } } else null
-        )
+        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Spot Name") }, modifier = Modifier.fillMaxWidth())
 
         ExposedDropdownMenuBox(
             expanded = expandedCategory,
             onExpandedChange = { expandedCategory = !expandedCategory },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = category,
@@ -236,64 +278,31 @@ fun AddSpotForm(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
                 modifier = Modifier.menuAnchor().fillMaxWidth()
             )
-            ExposedDropdownMenu(
-                expanded = expandedCategory,
-                onDismissRequest = { expandedCategory = false }
-            ) {
+            ExposedDropdownMenu(expanded = expandedCategory, onDismissRequest = { expandedCategory = false }) {
                 categories.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            category = option
-                            expandedCategory = false
-                        }
-                    )
+                    DropdownMenuItem(text = { Text(option) }, onClick = { category = option; expandedCategory = false })
                 }
             }
         }
 
-        OutlinedTextField(
-            value = description,
-            onValueChange = { if (it.length <= 150) description = it },
-            label = { Text("Description") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 2
-        )
-
-        OutlinedTextField(
-            value = distance,
-            onValueChange = { distance = it },
-            label = { Text("Distance (e.g., 2 km)") },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        )
-
-        OutlinedTextField(
-            value = bestTime,
-            onValueChange = { bestTime = it },
-            label = { Text("Best Time to Visit") },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
+        OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+        OutlinedTextField(value = distance, onValueChange = { distance = it }, label = { Text("Distance (e.g. 5 km)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = bestTime, onValueChange = { bestTime = it }, label = { Text("Best Time (e.g. Sunset)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = locationUrl, onValueChange = { locationUrl = it }, label = { Text("Google Maps URL (Optional)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = entryFee, onValueChange = { entryFee = it }, label = { Text("Entry Fee (Optional)") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = timings, onValueChange = { timings = it }, label = { Text("Timings (Optional)") }, modifier = Modifier.fillMaxWidth())
 
         Button(
-            onClick = {
-                if (name.isBlank()) {
-                    nameError = true
-                    return@Button
-                }
-                onSave(name, category, description, distance, bestTime, pendingPhotoUri)
-            },
+            onClick = { onSave(name, category, description, distance, bestTime, locationUrl, entryFee, timings, pendingPhotoUri) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            enabled = !loading
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Terra),
+            enabled = !loading && name.isNotBlank()
         ) {
-            if (loading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
-            } else {
-                Text("Add Spot")
-            }
+            if (loading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+            else Text("Add Spot", fontWeight = FontWeight.Bold)
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }

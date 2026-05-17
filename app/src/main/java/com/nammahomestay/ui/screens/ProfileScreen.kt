@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,13 +19,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.nammahomestay.data.HostProfile
 import com.nammahomestay.ui.profile.ProfileViewModel
+import com.nammahomestay.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,29 +50,24 @@ fun ProfileScreen() {
 
     var homestayName by remember(profileData.homestayName) { mutableStateOf(profileData.homestayName) }
     var village by remember(profileData.village) { mutableStateOf(profileData.village) }
-    var numRooms by remember(profileData.numRooms) { mutableStateOf(if (profileData.numRooms > 0) profileData.numRooms.toString() else "") }
-    var maxGuests by remember(profileData.maxGuests) { mutableStateOf(if (profileData.maxGuests > 0) profileData.maxGuests.toString() else "") }
-    var roomType by remember(profileData.roomType) { mutableStateOf(profileData.roomType) }
     var description by remember(profileData.description) { mutableStateOf(profileData.description) }
     var whatsapp by remember(profileData.whatsapp) { mutableStateOf(profileData.whatsapp) }
 
     val checklistLabels = listOf(
-        "roomsClean" to "Rooms are clean and swept",
-        "toiletsClean" to "Toilets are clean",
-        "freshLinen" to "Fresh bed linen provided",
-        "drinkingWater" to "Drinking water available",
-        "mosquitoNets" to "Mosquito nets provided",
-        "noDrains" to "No open drains near entrance"
+        "roomsClean" to "Clean bedsheets & pillows",
+        "workingFan" to "Working fan / AC",
+        "toiletsClean" to "Clean toilet & bathroom",
+        "mosquitoNets" to "Mosquito protection",
+        "drinkingWater" to "Safe drinking water available",
+        "chargingPoints" to "Phone charging points in room"
     )
 
     var checklistState by remember(profileData.verificationChecklist) { 
-        mutableStateOf(checklistLabels.associate { it.first to (profileData.verificationChecklist[it.first] == true) }) 
+        mutableStateOf(profileData.verificationChecklist) 
     }
 
-    val availableLanguages = listOf("Kannada", "Tulu", "English", "Hindi")
+    val availableLanguages = listOf("Kannada", "English", "Hindi", "Tulu")
     var selectedLanguages by remember(profileData.languages) { mutableStateOf(profileData.languages.toSet()) }
-
-    var expandedRoomType by remember { mutableStateOf(false) }
 
     val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { viewModel.uploadPhoto(it) }
@@ -76,247 +75,198 @@ fun ProfileScreen() {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Home Profile", fontWeight = FontWeight.Bold, color = TerraDark) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Cream)
+            )
+        },
         bottomBar = {
-            Button(
-                onClick = {
-                    val updatedProfile = HostProfile(
-                        homestayName = homestayName,
-                        village = village,
-                        numRooms = numRooms.toIntOrNull() ?: 0,
-                        maxGuests = maxGuests.toIntOrNull() ?: 0,
-                        roomType = roomType,
-                        description = description,
-                        photoUrls = profileData.photoUrls,
-                        verificationChecklist = checklistState,
-                        whatsapp = whatsapp,
-                        languages = selectedLanguages.toList()
-                    )
-                    viewModel.saveProfile(updatedProfile)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
-                enabled = !loading
-            ) {
-                Text("Save Profile")
+            Surface(shadowElevation = 8.dp) {
+                Button(
+                    onClick = {
+                        val updatedProfile = HostProfile(
+                            homestayName = homestayName,
+                            village = village,
+                            description = description,
+                            photoUrls = profileData.photoUrls,
+                            verificationChecklist = checklistState,
+                            whatsapp = whatsapp,
+                            languages = selectedLanguages.toList(),
+                            isProfileComplete = true
+                        )
+                        viewModel.saveProfile(updatedProfile)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Terra),
+                    enabled = !loading
+                ) {
+                    Text("💾 Save Profile", fontWeight = FontWeight.Bold)
+                }
             }
         }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Cream)
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                if (loading) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                if (loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Host Details
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = CardDefaults.outlinedCardBorder()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("👤 Host Details", fontWeight = FontWeight.Bold, color = BrownMedium)
+                        
+                        OutlinedTextField(
+                            value = homestayName,
+                            onValueChange = { homestayName = it },
+                            label = { Text("Host Name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = village,
+                            onValueChange = { village = it },
+                            label = { Text("Village / Location") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("About Your Home-Stay") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                    }
+                }
+            }
+
+            // Contact Details
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = CardDefaults.outlinedCardBorder()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("📞 Contact Details", fontWeight = FontWeight.Bold, color = BrownMedium)
+                        
+                        OutlinedTextField(
+                            value = whatsapp,
+                            onValueChange = { whatsapp = it },
+                            label = { Text("WhatsApp Number") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text("Languages Spoken", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextMedium)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            availableLanguages.forEach { lang ->
+                                FilterChip(
+                                    selected = selectedLanguages.contains(lang),
+                                    onClick = {
+                                        val current = selectedLanguages.toMutableSet()
+                                        if (current.contains(lang)) current.remove(lang) else current.add(lang)
+                                        selectedLanguages = current
+                                    },
+                                    label = { Text(lang) },
+                                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Terra, selectedLabelColor = Color.White)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
             // Photos Section
             item {
-                SectionHeader("PHOTOS")
-                LazyRow(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        Card(
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = CardDefaults.outlinedCardBorder()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("📸 Room Photos", fontWeight = FontWeight.Bold, color = BrownMedium, modifier = Modifier.padding(bottom = 12.dp))
+                        
+                        // Photo Upload Box
+                        Box(
                             modifier = Modifier
-                                .size(100.dp)
-                                .clickable {
-                                    if (profileData.photoUrls.size < 6) {
-                                        photoLauncher.launch("image/*")
-                                    }
-                                },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                .fillMaxWidth()
+                                .height(120.dp)
+                                .background(Sand, RoundedCornerShape(12.dp))
+                                .clickable { photoLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Add, contentDescription = "Add Photo")
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("📷", fontSize = 32.sp)
+                                Text("Tap to add room photos", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextMedium)
                             }
                         }
-                    }
-                    items(profileData.photoUrls) { url ->
-                        Box(modifier = Modifier.size(100.dp)) {
-                            AsyncImage(
-                                model = url,
-                                contentDescription = "Photo",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                            IconButton(
-                                onClick = { viewModel.deletePhoto(url) },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .size(24.dp)
-                                    .background(MaterialTheme.colorScheme.error, RoundedCornerShape(12.dp))
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.onError,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
 
-            // Property Details
-            item {
-                SectionHeader("PROPERTY DETAILS")
-                OutlinedTextField(
-                    value = homestayName,
-                    onValueChange = { homestayName = it },
-                    label = { Text("Homestay Name") },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                OutlinedTextField(
-                    value = village,
-                    onValueChange = { village = it },
-                    label = { Text("Village/Location") },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = numRooms,
-                        onValueChange = { numRooms = it },
-                        label = { Text("Num Rooms") },
-                        modifier = Modifier.weight(1f).padding(end = 4.dp)
-                    )
-                    OutlinedTextField(
-                        value = maxGuests,
-                        onValueChange = { maxGuests = it },
-                        label = { Text("Max Guests") },
-                        modifier = Modifier.weight(1f).padding(start = 4.dp)
-                    )
-                }
-                ExposedDropdownMenuBox(
-                    expanded = expandedRoomType,
-                    onExpandedChange = { expandedRoomType = !expandedRoomType },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                ) {
-                    OutlinedTextField(
-                        value = roomType,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Room Type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRoomType) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedRoomType,
-                        onDismissRequest = { expandedRoomType = false }
-                    ) {
-                        listOf("Private Room", "Shared Room", "Entire Home").forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option) },
-                                onClick = {
-                                    roomType = option
-                                    expandedRoomType = false
+                        LazyRow(
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(profileData.photoUrls) { url ->
+                                Box(modifier = Modifier.size(100.dp)) {
+                                    AsyncImage(
+                                        model = url,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
+                                    )
+                                    IconButton(
+                                        onClick = { viewModel.deletePhoto(url) },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(24.dp)
+                                            .background(Color.White.copy(alpha = 0.7f), CircleShape)
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Red)
+                                    }
                                 }
-                            )
+                            }
                         }
                     }
                 }
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { if (it.length <= 200) description = it },
-                    label = { Text("Short Description") },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    minLines = 3,
-                    supportingText = {
-                        Text(
-                            text = "${description.length}/200",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.End
-                        )
-                    }
-                )
             }
 
             // Checklist
             item {
-                SectionHeader("CLEANLINESS CHECKLIST")
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Column(modifier = Modifier.padding(8.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = CardDefaults.outlinedCardBorder()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("✅ Verification Checklist", fontWeight = FontWeight.Bold, color = BrownMedium, modifier = Modifier.padding(bottom = 12.dp))
                         checklistLabels.forEach { (key, label) ->
+                            val isChecked = checklistState[key] == true
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        checklistState = checklistState.toMutableMap().apply {
-                                            put(key, !(this[key] ?: false))
-                                        }
-                                    }
                                     .padding(vertical = 4.dp)
-                            ) {
-                                Checkbox(
-                                    checked = checklistState[key] == true,
-                                    onCheckedChange = { isChecked ->
-                                        checklistState = checklistState.toMutableMap().apply { put(key, isChecked) }
+                                    .background(if (isChecked) LeafLight else Sand, RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        checklistState = checklistState.toMutableMap().apply { put(key, !isChecked) }
                                     }
-                                )
-                                Text(text = label, modifier = Modifier.padding(start = 8.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(if (isChecked) Leaf else Color.Transparent, RoundedCornerShape(5.dp))
+                                        .background(if (!isChecked) Color.White.copy(0.5f) else Color.Transparent)
+                                ) {
+                                    if (isChecked) Text("✓", color = Color.White, fontSize = 14.sp, modifier = Modifier.align(Alignment.Center))
+                                }
+                                Text(text = label, modifier = Modifier.padding(start = 12.dp), fontSize = 13.sp, color = TextMedium, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
                 }
             }
-
-            // Contact
-            item {
-                SectionHeader("CONTACT")
-                OutlinedTextField(
-                    value = whatsapp,
-                    onValueChange = { whatsapp = it },
-                    label = { Text("WhatsApp Number") },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-
-                Text(
-                    text = "Languages Spoken",
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    availableLanguages.forEach { lang ->
-                        FilterChip(
-                            selected = selectedLanguages.contains(lang),
-                            onClick = {
-                                val current = selectedLanguages.toMutableSet()
-                                if (current.contains(lang)) current.remove(lang) else current.add(lang)
-                                selectedLanguages = current
-                            },
-                            label = { Text(lang) }
-                        )
-                    }
-                }
-            }
+            
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
-}
-
-@Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        color = MaterialTheme.colorScheme.secondary,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
-    )
 }

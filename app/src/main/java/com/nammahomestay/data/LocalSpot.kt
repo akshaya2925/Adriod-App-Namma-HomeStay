@@ -10,5 +10,8 @@ data class LocalSpot(
     val photoUrl: String? = null,
     val distance: String = "",
     val bestTime: String = "",
+    val locationUrl: String = "",
+    val entryFee: String = "",
+    val timings: String = "",
     val createdAt: Timestamp = Timestamp.now()
 )

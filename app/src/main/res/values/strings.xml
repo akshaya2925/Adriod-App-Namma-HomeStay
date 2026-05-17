@@ -15,6 +15,6 @@
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_finish">Finish</string>
-    <string name="call">ðŸ“ž Call</string>
+    <string name="call">Call</string>
     <string name="no_menu_yet">No menu updated today.</string>
 </resources>
